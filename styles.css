@@ -406,9 +406,13 @@
     margin-bottom: 0.25rem;
   }
 
-  .footer-link-icon {
-    width: 1.8rem;
-    height: 1.8rem;
+  .footer-link img.footer-link-icon {
+    display: block;
+    flex: 0 0 auto;
+    width: 1.8rem !important;
+    height: 1.8rem !important;
+    max-width: 1.8rem;
+    max-height: 1.8rem;
     object-fit: contain;
     margin-bottom: 0.25rem;
     border-radius: 0.25rem;
