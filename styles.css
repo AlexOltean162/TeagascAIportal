@@ -386,6 +386,8 @@
   .footer-links {
     display: flex;
     justify-content: center;
+    align-items: flex-start;
+    flex-wrap: wrap;
     gap: 5rem; /* spacing between links */
   }
 
@@ -402,6 +404,14 @@
   .footer-link i {
     font-size: 1.6rem; /* make icon a bit bigger */
     margin-bottom: 0.25rem;
+  }
+
+  .footer-link-icon {
+    width: 1.8rem;
+    height: 1.8rem;
+    object-fit: contain;
+    margin-bottom: 0.25rem;
+    border-radius: 0.25rem;
   }
 
 
