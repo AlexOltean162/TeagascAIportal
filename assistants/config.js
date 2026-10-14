@@ -1,6 +1,6 @@
 // The assistants shown in the hub, grouped as they appear in the sidebar.
 // To add an assistant: add an entry here and an nginx location that proxies its URL to the app
-// (see deploy/nginx-assistants.conf), then give the character a new look in character.js.
+// (see deploy/nginx-hcux402-portal.conf and nginx-hcux404-assistant-api.conf), then give the character a new look in character.js.
 //
 //   id        used in the address (assistants/#id); keep it short and stable
 //   summary   one line under the name on the assistant's welcome screen

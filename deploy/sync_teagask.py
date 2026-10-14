@@ -4,7 +4,7 @@
 
 Teag-Ask's prebuilt UI calls /api/... and /assets/... from the site root. Under the portal it is served
 from a sub-folder, with /aiportal/teagask/api/ proxied to the self-hosted Teag-Ask app
-(deploy/nginx-assistants.conf), so this script copies only the files index.html uses and rewrites those
+(deploy/nginx-hcux402-portal.conf), so this script copies only the files index.html uses and rewrites those
 paths to relative ones. The self-hosted app runs without APP_ACCESS_KEY, so the copy also saves a
 placeholder key before the UI starts: the UI then skips its access screen, and the backend accepts any key.
 

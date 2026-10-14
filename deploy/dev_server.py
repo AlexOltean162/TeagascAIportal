@@ -2,7 +2,7 @@
 
     python deploy/dev_server.py            -> http://localhost:8080/aiportal/
 
-Serves this folder at /aiportal/ and proxies each assistant like deploy/nginx-assistants.conf does,
+Serves this folder at /aiportal/ and proxies each assistant like production does (deploy/nginx-hcux402-portal.conf),
 streaming responses through so answers arrive token by token. Start the assistant apps first
 (Research on :8000, Policy on :8020, Staff Handbook on :8030); any that aren't running show as
 "not available" in the hub. Teag-Ask's API is expected on :8040.
@@ -49,7 +49,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         super().do_GET()
 
     def end_headers(self):
-        # Like production (see nginx-assistants.conf): browsers re-check files, so updates show at once.
+        # Like production (see nginx-hcux402-portal.conf): browsers re-check files, so updates show at once.
         if not self.path.startswith(tuple(UPSTREAMS)):
             self.send_header("Cache-Control", "no-cache")
         super().end_headers()
