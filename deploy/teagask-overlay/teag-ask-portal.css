@@ -1,0 +1,29 @@
+/* Portal additions to the Teag-Ask UI, copied in by deploy/sync_teagask.py. */
+
+/* Theme follows the AI Portal setting, and there is no daily limit to show. */
+.topbar > .theme-toggle,
+.footer-usage { display: none !important; }
+
+/* Back to the portal on the left; New chat moves to the right. */
+.topbar > .new-chat-button { grid-column: 3; grid-row: 1; justify-self: end; }
+.topbar > .portal-back { grid-column: 1; grid-row: 1; justify-self: start; }
+.topbar > .new-chat-button, .portal-back { white-space: nowrap; }
+
+.portal-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 9px;
+  color: var(--ink-soft);
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  font-size: 11px;
+  text-decoration: none;
+  transition: color .2s, background .2s, border-color .2s, transform .2s;
+}
+.portal-back:hover { color: var(--ink); background: var(--surface-low); border-color: var(--outline-variant); transform: translateY(-1px); }
+.portal-back:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .portal-back, .portal-back:hover { transition: none; transform: none; }
+}

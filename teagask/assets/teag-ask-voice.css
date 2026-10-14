@@ -1,0 +1,88 @@
+/* Teag-Ask voice input — see teag-ask-voice.js. Colours come from the app's tokens, so dark mode follows. */
+.composer-main { position: relative; }
+
+.tav-mic {
+  width: 40px; height: 40px; flex: 0 0 auto; display: grid; place-items: center; padding: 0;
+  color: var(--ink-soft); background: transparent; border: 0; border-radius: var(--radius-pill, 999px);
+  cursor: pointer; transition: background .2s, color .2s, transform .2s;
+}
+.tav-mic:hover { color: var(--primary); background: var(--surface-high); }
+.tav-mic:active { transform: scale(.94); }
+.tav-mic:focus-visible, .tav-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.tav-mic svg { transition: transform .25s cubic-bezier(.3, 1.6, .5, 1); }
+.tav-mic:hover svg { transform: scale(1.08); }
+/* waiting for the browser's permission prompt */
+.tav-mic--asking { color: var(--primary); animation: tav-breathe 1.2s ease-in-out infinite; }
+
+/* recording / transcribing: the overlay covers the composer row; the React-owned controls stay mounted but hidden */
+.composer-main[data-tav] > :not(.tav-overlay):not(.tav-toast):not(.tav-live) { visibility: hidden; }
+.tav-overlay {
+  position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; gap: 10px; padding-left: 8px;
+  animation: tav-in .22s cubic-bezier(.2, .8, .2, 1) both;
+}
+.tav-overlay--out { animation: tav-out .18s ease-in both; }
+
+.tav-rec {
+  width: 10px; height: 10px; flex: 0 0 auto; border-radius: 50%; background: var(--error);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--error) 45%, transparent);
+  animation: tav-pulse 1.4s ease-out infinite;
+}
+.tav-time { flex: 0 0 auto; min-width: 34px; color: var(--ink-soft); font-size: 13px; font-variant-numeric: tabular-nums; }
+.tav-wave {
+  flex: 1 1 auto; min-width: 0; height: 32px; color: var(--ink);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%); mask-image: linear-gradient(90deg, transparent, #000 14%);
+}
+
+.tav-btn {
+  width: 36px; height: 36px; flex: 0 0 auto; display: grid; place-items: center; padding: 0; position: relative;
+  border: 0; border-radius: var(--radius-pill, 999px); cursor: pointer; transition: background .2s, transform .2s, color .2s;
+}
+.tav-btn:active { transform: scale(.92); }
+.tav-cancel { color: var(--ink-soft); background: transparent; }
+.tav-cancel:hover { color: var(--ink); background: var(--surface-high); }
+.tav-done { width: 40px; height: 40px; color: var(--surface-lowest); background: var(--primary); }
+.tav-done:hover { background: var(--primary-container); }
+.tav-done svg { transition: opacity .15s, transform .2s; }
+.tav-spin {
+  position: absolute; inset: 9px; border-radius: 50%; opacity: 0;
+  border: 2.2px solid color-mix(in srgb, currentColor 30%, transparent); border-top-color: currentColor;
+}
+
+.composer-main[data-tav="transcribing"] .tav-rec { animation: none; background: var(--outline); opacity: .6; }
+.composer-main[data-tav="transcribing"] .tav-done { cursor: progress; }
+.composer-main[data-tav="transcribing"] .tav-done svg { opacity: 0; transform: scale(.6); }
+.composer-main[data-tav="transcribing"] .tav-spin { opacity: 1; animation: tav-spin .75s linear infinite; }
+
+/* the transcript lands: a brief glow on the question box */
+.composer:has(.tav-inserted) { animation: tav-glow .9s ease-out; }
+
+.tav-toast {
+  position: absolute; left: 0; right: 0; bottom: calc(100% + 14px); z-index: 3; width: max-content; max-width: 100%;
+  margin: 0 auto; padding: 8px 14px; color: var(--ink); background: var(--surface-highest);
+  border-radius: var(--radius-panel, 12px); box-shadow: 0 6px 18px #0000001f; font-size: 13px; line-height: 1.4; text-align: center;
+  animation: tav-in .22s cubic-bezier(.2, .8, .2, 1) both;
+}
+.tav-toast--out { animation: tav-out .3s ease-in both; }
+.tav-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+@keyframes tav-in { from { opacity: 0; transform: translateY(4px) scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes tav-out { to { opacity: 0; transform: translateY(2px) scale(.99); } }
+@keyframes tav-pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--error) 45%, transparent); }
+  70%, 100% { box-shadow: 0 0 0 8px transparent; }
+}
+@keyframes tav-breathe { 50% { background: var(--surface-high); transform: scale(1.06); } }
+@keyframes tav-spin { to { transform: rotate(360deg); } }
+@keyframes tav-glow {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 40%, transparent); }
+  100% { box-shadow: 0 0 0 10px transparent; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tav-overlay, .tav-overlay--out, .tav-toast, .tav-toast--out, .tav-rec, .tav-mic--asking, .composer:has(.tav-inserted) { animation: none; }
+  .composer-main[data-tav="transcribing"] .tav-spin { animation-duration: 2s; }
+}
+@media (max-width: 480px) {
+  .tav-overlay { gap: 6px; padding-left: 4px; }
+  .tav-time { min-width: 30px; font-size: 12px; }
+}

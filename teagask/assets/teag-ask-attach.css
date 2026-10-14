@@ -1,0 +1,94 @@
+/* Teag-Ask attachments — see teag-ask-attach.js. Uses the app's tokens, so dark mode follows. */
+.taa-tray { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 2px 2px 10px; }
+
+.taa-chip {
+  position: relative; display: flex; align-items: center; gap: 10px; max-width: 260px; min-width: 0;
+  padding: 6px 30px 6px 6px; overflow: hidden;
+  background: var(--surface-low); border: 1px solid var(--outline-variant); border-radius: var(--radius-panel, 12px);
+  animation: taa-pop .26s cubic-bezier(.2, .9, .3, 1.2) both;
+}
+.taa-thumb {
+  width: 40px; height: 40px; flex: 0 0 auto; display: grid; place-items: center; object-fit: cover;
+  border-radius: 8px; background: var(--surface-high);
+}
+.taa-thumb--pdf { color: var(--error); background: color-mix(in srgb, var(--error) 10%, var(--surface-lowest)); }
+.taa-meta { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
+.taa-name { overflow: hidden; color: var(--ink); font-size: 13px; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; }
+.taa-sub { display: flex; align-items: center; gap: 4px; color: var(--outline); font-size: 11.5px; line-height: 1.3; }
+.taa-chip--reading .taa-sub { color: var(--primary); }
+.taa-chip--reading .taa-thumb { animation: taa-breathe 1.4s ease-in-out infinite; }
+.taa-chip--error { border-color: color-mix(in srgb, var(--error) 55%, var(--outline-variant)); }
+.taa-chip--error .taa-sub { color: var(--error); white-space: normal; }
+.taa-chip--ready .taa-thumb { animation: taa-done .5s ease-out; }
+
+/* "reading" — a scan line sweeps across the chip while OCR runs */
+.taa-scan {
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(100deg, transparent 20%, color-mix(in srgb, var(--primary) 16%, transparent) 50%, transparent 80%);
+  background-size: 220% 100%; animation: taa-sweep 1.3s linear infinite;
+}
+
+.taa-remove {
+  position: absolute; top: 50%; right: 6px; width: 22px; height: 22px; display: grid; place-items: center; padding: 0;
+  color: var(--ink-soft); background: transparent; border: 0; border-radius: 50%; cursor: pointer;
+  transform: translateY(-50%); transition: background .15s, color .15s;
+}
+.taa-remove:hover { color: var(--ink); background: var(--surface-highest); }
+.taa-remove:focus-visible, .taa-suggest:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+.taa-suggest {
+  padding: 7px 12px; color: var(--primary); background: transparent; font-size: 12.5px; font-weight: 600;
+  border: 1px dashed color-mix(in srgb, var(--primary) 55%, transparent); border-radius: var(--radius-pill, 999px);
+  cursor: pointer; animation: taa-pop .3s .1s cubic-bezier(.2, .9, .3, 1.2) both; transition: background .15s;
+}
+.taa-suggest:hover { background: color-mix(in srgb, var(--primary) 9%, transparent); }
+.composer:not(:has(#question:placeholder-shown)) .taa-suggest { display: none; }
+
+/* files shown on the sent message */
+.taa-sent { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; margin-bottom: 8px; }
+.taa-sent .taa-chip { padding-right: 12px; background: var(--surface-lowest); animation: none; }
+.taa-sent .taa-thumb { width: 34px; height: 34px; }
+
+/* drag a file over the page */
+.taa-drop {
+  position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; pointer-events: none;
+  background: color-mix(in srgb, var(--surface, #fcf9f8) 72%, transparent); backdrop-filter: blur(3px);
+  animation: taa-fade .15s ease-out both;
+}
+.taa-drop-card {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 28px 40px;
+  color: var(--primary, #005d31); background: var(--surface-lowest, #fff);
+  border: 2px dashed currentColor; border-radius: 18px; box-shadow: 0 18px 40px #0000001f;
+  animation: taa-pop .25s cubic-bezier(.2, .9, .3, 1.2) both;
+}
+.taa-drop-card svg { width: 30px; height: 30px; animation: taa-bob 1.2s ease-in-out infinite; }
+.taa-drop-card strong { color: var(--ink, #1c1b1b); font-size: 16px; }
+.taa-drop-card span { color: var(--outline, #6f7a6f); font-size: 12.5px; }
+.taa-drop--dark { --surface: #111713; --surface-lowest: #18211b; --ink: #f4f7f2; --primary: #b8f2c6; --outline: #94a594; }
+
+@keyframes taa-pop { from { opacity: 0; transform: translateY(6px) scale(.94); } to { opacity: 1; transform: none; } }
+@keyframes taa-fade { from { opacity: 0; } }
+@keyframes taa-sweep { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+@keyframes taa-breathe { 50% { transform: scale(.94); opacity: .75; } }
+@keyframes taa-done { 0% { transform: scale(.9); } 60% { transform: scale(1.06); } 100% { transform: none; } }
+@keyframes taa-bob { 50% { transform: translateY(-4px) rotate(-8deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .taa-chip, .taa-suggest, .taa-drop, .taa-drop-card, .taa-drop-card svg, .taa-chip--reading .taa-thumb, .taa-chip--ready .taa-thumb { animation: none; }
+  .taa-scan { animation-duration: 3s; }
+}
+@media (max-width: 480px) { .taa-chip { max-width: 100%; } }
+
+/* [A1] citations: an attached file, styled apart from web sources (outlined, document tint) */
+.citation--attachment { cursor: help; }
+.citation--attachment .citation-mark {
+  color: var(--ink-soft); background: var(--surface-high);
+  box-shadow: inset 0 0 0 1px var(--outline-variant);
+}
+.citation--attachment:hover .citation-mark, .citation--attachment:focus-visible .citation-mark { color: var(--surface-lowest); background: var(--ink-soft); box-shadow: none; }
+.citation--attachment:focus-visible { outline: none; }
+.citation--attachment .citation-popover { display: none; }                 /* out of layout until opened: no page-width overflow */
+.citation--attachment:hover .citation-popover,
+.citation--attachment:focus-visible .citation-popover { display: block; opacity: 1; transform: translate(calc(-50% + var(--taa-nudge, 0px)), -3px); animation: taa-fade .16s ease-out; }
+.citation--attachment .citation-popover::after { margin-left: calc(-1 * var(--taa-nudge, 0px)); }
+.taa-pop-kind { color: var(--outline); }

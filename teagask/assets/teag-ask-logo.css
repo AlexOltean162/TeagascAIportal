@@ -1,0 +1,211 @@
+/* TeagAsk logo — animation styles. Pair with teag-ask-logo.js and the inline animatable SVG. */
+#teag-ask-logo .draw { stroke-dasharray: 1 1; stroke-dashoffset: 0; }
+#teag-ask-logo .flow { stroke-dasharray: 1 1.2; stroke-dashoffset: 0; }
+#teag-ask-logo #character, #teag-ask-logo #eyes, #teag-ask-logo .eye, #teag-ask-logo .hill {
+  transform-box: fill-box;
+}
+#teag-ask-logo #character, #teag-ask-logo .hill { transform-origin: 50% 100%; }  /* hills sit on their ring edge */
+#teag-ask-logo .eye, #teag-ask-logo #eyes { transform-origin: 50% 50%; }
+
+/* During the intro the inner rings are drawn as strokes so they can draw on */
+.logo--intro .ring { display: none; }
+.logo--intro .flow { display: inline; }
+
+/* ---- 1. Intro: body + tail draw on, rings follow, hills grow, eyes open, little hop and a glance ---- */
+.logo--intro #body-draw       { animation: draw 850ms cubic-bezier(.65,0,.35,1) both; }
+.logo--intro #ring-green-flow { animation: flow-in 800ms 100ms cubic-bezier(.65,0,.35,1) both; }
+.logo--intro #ring-lime-flow  { animation: flow-in 800ms 200ms cubic-bezier(.65,0,.35,1) both; }
+.logo--intro #hill-dark       { animation: grow 600ms 960ms cubic-bezier(.3,0,.3,1) both; }
+.logo--intro #hill-green      { animation: grow 600ms 1060ms cubic-bezier(.3,0,.3,1) both; }
+.logo--intro #hill-lime       { animation: grow 600ms 1160ms cubic-bezier(.3,0,.3,1) both; }
+.logo--intro .eye             { animation: eyes-wake 1500ms 1450ms both; }
+.logo--intro #eyes            { animation: glance 1200ms 2150ms ease-in-out both; }
+.logo--intro #character       { animation: hop 800ms 1560ms both; }
+
+/* ---- 2. Thinking: the JS controller morphs and spins these stroke versions ---- */
+#teag-ask-logo.logo--thinking .ring, #teag-ask-logo.logo--thinking #body { display: none; }
+#teag-ask-logo.logo--thinking .flow, #teag-ask-logo.logo--thinking .thinking-part { display: inline; }
+
+/* reduced motion: no morphing or spinning, just a gentle pulse of the inner rings */
+.logo--thinking-reduced .ring { animation: pulse 1600ms ease-in-out infinite; }
+.logo--thinking-reduced #ring-green { animation-delay: -800ms; }
+
+@keyframes draw    { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes flow-in { from { stroke-dashoffset: 1.05; } to { stroke-dashoffset: 0; } }
+@keyframes grow {
+  0%   { transform: scaleY(0); }
+  70%  { transform: scaleY(1.07); }
+  100% { transform: scaleY(1); }
+}
+@keyframes eyes-wake {            /* closed → pop open → settle → blink */
+  0%   { transform: scaleY(0); }
+  14%  { transform: scale(1.12, 1.2); animation-timing-function: ease-out; }
+  24%  { transform: scale(1); }
+  62%  { transform: scale(1); animation-timing-function: ease-in; }
+  67%  { transform: scaleY(.1); animation-timing-function: ease-out; }
+  73%  { transform: scale(1); }
+  100% { transform: scale(1); }
+}
+@keyframes glance {                /* look toward the gap, then back at you */
+  0%, 100% { transform: none; }
+  30%, 65% { transform: translate(7px, -4px); }
+}
+@keyframes hop {                   /* anticipation squash → stretch up → land squash → settle */
+  0%   { transform: none; animation-timing-function: ease-out; }
+  18%  { transform: scale(1.035, .95); animation-timing-function: cubic-bezier(.2,.7,.3,1); }
+  45%  { transform: translateY(-12px) scale(.975, 1.04); animation-timing-function: cubic-bezier(.6,0,.9,.5); }
+  68%  { transform: scale(1.03, .965); animation-timing-function: ease-out; }
+  84%  { transform: scale(.995, 1.01); }
+  100% { transform: none; }
+}
+@keyframes pulse { 50% { opacity: .35; } }
+
+@media (prefers-reduced-motion: reduce) {
+  #teag-ask-logo.logo--intro, #teag-ask-logo.logo--intro * { animation: none !important; }
+}
+
+
+/* ================= Teag-Ask placement in the app ================= */
+/* access screen, welcome screen (above the tagline), and the top bar during a chat */
+.teagask-logo-slot--gate, .teagask-ghost-slot--gate { display: block; width: 112px; height: 46px; margin: -6px auto 16px; }
+.teagask-logo-slot--hero, .teagask-ghost-slot--hero { display: block; width: 176px; margin: 0 auto 22px; }
+.teagask-ghost-slot--hero { height: 72px; }
+.teagask-logo-slot #teag-ask-logo { display: block; width: 100%; height: auto; will-change: transform; }
+@media (max-width: 480px) {
+  .teagask-logo-slot--hero, .teagask-ghost-slot--hero { width: 136px; margin-bottom: 16px; }
+  .teagask-ghost-slot--hero { height: 56px; }
+}
+.topbar-brand { position: relative; }
+.teagask-logo-slot--bar { position: absolute; left: 50%; top: 50%; width: 84px; transform: translate(-50%, -50%); }
+.topbar-brand .teagasc-logo { transition: opacity .35s ease .25s, visibility 0s linear 0s; }
+.teagask-chat .topbar-brand .teagasc-logo { opacity: 0; visibility: hidden; transition: opacity .2s ease, visibility 0s linear .2s; }
+
+/* the top bar stays in view; scrolled-to content never tucks underneath it */
+.topbar { position: sticky; top: 0; z-index: 30; }
+html { scroll-padding-top: 84px; }
+.message-row { scroll-margin-top: 84px; }
+
+/* hand-overs: the conversation rises in while a copy of the outgoing view slides/dissolves away */
+.teagask-chat .chat-view { animation: teagask-rise .6s cubic-bezier(.2,.8,.2,1) .12s backwards; }
+@keyframes teagask-rise { from { opacity: 0; transform: translateY(56px); } }
+.teagask-ghost { position: fixed; margin: 0; z-index: 10; pointer-events: none; box-sizing: border-box; }
+
+/* ================= answer streaming ================= */
+.streaming-message .tw { animation: teagask-word .3s ease-out both; }                /* each new word fades in (no blur: it flickered) */
+@keyframes teagask-word { from { opacity: 0; } }
+.citation--pending { cursor: default; }
+.streaming-message .citation--pending .citation-mark { animation: teagask-pop .38s cubic-bezier(.3,1.6,.5,1) both; }
+@keyframes teagask-pop { from { opacity: 0; transform: scale(.4); } }
+.streaming-message .answer-content > :last-child { margin-bottom: 0; }
+
+/* finished answer: sources rise in; chips arrive one after another when opened */
+.message-row.assistant:not(.streaming-message) .source-tray { animation: teagask-rise-sm .45s cubic-bezier(.2,.8,.2,1) .12s backwards; }
+@keyframes teagask-rise-sm { from { opacity: 0; transform: translateY(8px); } }
+.source-chip { animation: teagask-rise-sm .3s cubic-bezier(.2,.8,.2,1) backwards; }
+.source-chip:nth-child(2) { animation-delay: .05s; } .source-chip:nth-child(3) { animation-delay: .1s; }
+.source-chip:nth-child(4) { animation-delay: .15s; } .source-chip:nth-child(5) { animation-delay: .2s; }
+.source-chip:nth-child(6) { animation-delay: .25s; } .source-chip:nth-child(n+7) { animation-delay: .3s; }
+
+/* ================= answer actions: copy + feedback ================= */
+.teagask-actions { display: flex; align-items: center; gap: 2px; margin-top: 10px; animation: teagask-rise-sm .4s cubic-bezier(.2,.8,.2,1) .25s backwards; }
+.teagask-action { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 9px; border: 1px solid transparent; border-radius: 8px;
+  background: transparent; color: var(--ink-soft); font: inherit; font-size: 12px; cursor: pointer; transition: color .2s, background .2s, border-color .2s; }
+.teagask-action:hover:not(:disabled) { color: var(--ink); background: var(--surface-low); }
+.teagask-action svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.teagask-action[aria-pressed="true"] { color: var(--primary); background: var(--surface-container); }
+.teagask-action[aria-pressed="true"] svg { fill: currentColor; fill-opacity: .2; }
+.teagask-action.is-done { color: var(--primary); }
+.teagask-action:disabled { cursor: default; }
+.teagask-action:disabled:not([aria-pressed="true"]) { opacity: .4; }
+.teagask-check { stroke-dasharray: 24; animation: teagask-draw-check .35s ease-out both; }
+@keyframes teagask-draw-check { from { stroke-dashoffset: 24; } to { stroke-dashoffset: 0; } }
+.teagask-thanks { margin-left: 6px; color: var(--ink-soft); font-size: 12px; opacity: 0; }
+.teagask-thanks.show { animation: teagask-thanks 3s ease both; }
+@keyframes teagask-thanks { 0% { opacity: 0; transform: translateX(-4px); } 10%, 82% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+
+/* ================= errors: gentle shake-in + Try again ================= */
+.system-note { flex-wrap: wrap; align-items: center; animation: teagask-note-in .55s cubic-bezier(.3,1.2,.5,1) backwards; }
+@keyframes teagask-note-in { 0% { opacity: 0; transform: translateX(-10px); } 45% { opacity: 1; transform: translateX(5px); } 70% { transform: translateX(-2px); } 100% { transform: none; } }
+.teagask-retry { margin-left: auto; padding: 5px 12px; border: 1px solid currentColor; border-radius: 999px; background: transparent; color: inherit;
+  font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; animation: teagask-rise-sm .35s cubic-bezier(.2,.8,.2,1) .2s backwards; transition: background .2s; }
+.teagask-retry:hover { background: rgba(0, 0, 0, .06); }
+
+/* ================= topic pick: soft glow on the question box ================= */
+form.composer[data-teagask-glow] { animation: teagask-glow .9s ease-out; }
+@keyframes teagask-glow { 0% { box-shadow: 0 0 0 0 rgba(0, 135, 82, .35); } 100% { box-shadow: 0 0 0 12px rgba(0, 135, 82, 0); } }
+
+/* the status line ("Searching Teag-Ask knowledge") needs no dot: the character already shows it is working */
+.processing-status-dot { display: none; }
+
+/* ================= tables in answers ================= */
+.answer-content .answer-table-wrap { max-width: 100%; margin: 4px 0 15px; border: 1px solid var(--outline-variant);
+  border-radius: 10px; background: var(--surface-lowest); }
+.answer-table thead th:first-child { border-top-left-radius: 9px; } .answer-table thead th:last-child { border-top-right-radius: 9px; }
+/* source popovers in the right-hand column open leftwards so they stay on screen */
+.answer-table td:last-child:not(:first-child) .citation-popover { left: auto; right: 0; }
+.answer-table td:last-child:not(:first-child) .citation-popover:after { left: auto; right: 14px; }
+@media (max-width: 640px) {   /* wide tables scroll sideways on phones instead of squashing */
+  .answer-content .answer-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .answer-table td:first-child { white-space: normal; }
+}
+.answer-content .answer-table-wrap:last-child { margin-bottom: 0; }
+.answer-table { width: 100%; border-collapse: collapse; font-size: 13.5px; line-height: 1.5; }
+.answer-table th, .answer-table td { padding: 8px 14px; border-bottom: 1px solid var(--outline-variant); vertical-align: top; }
+.answer-table th { color: var(--ink); background: var(--surface-low); font-weight: 700; white-space: nowrap; }
+.answer-table tbody tr:last-child td { border-bottom: 0; }
+.answer-table tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--surface-low) 55%, transparent); }
+.answer-table td:first-child { font-weight: 600; white-space: nowrap; }
+
+/* ================= source summaries (citation popover) ================= */
+.citation-popover { text-align: left; font-weight: 400; white-space: normal; }   /* not inherited from a table cell */
+.citation-popover-title { overflow-wrap: anywhere; }
+.citation-popover-excerpt { max-height: 260px; overflow: hidden; }
+.citation-popover-excerpt:not(:has(.tgx-list)) { display: -webkit-box; -webkit-line-clamp: 9; -webkit-box-orient: vertical; }
+.tgx-intro { display: block; margin-bottom: 5px; color: var(--ink); font-weight: 600; }
+.tgx-list { display: grid; gap: 3px; }
+.tgx-item { display: grid; grid-template-columns: 16px 1fr; }
+.tgx-n { color: var(--primary); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* ================= scroll-to-latest button ================= */
+.teagask-jump { position: fixed; left: 50%; z-index: 6; width: 38px; height: 38px; display: grid; place-items: center; padding: 0;
+  color: var(--primary-ink); background: var(--surface-lowest); border: 1px solid var(--outline-variant); border-radius: 50%;
+  box-shadow: 0 6px 18px #1c1b1b1f; cursor: pointer; opacity: 0; pointer-events: none;
+  transform: translate(-50%, 10px) scale(.85); transition: opacity .2s ease, transform .25s cubic-bezier(.3,1.4,.5,1), background .15s; }
+.teagask-jump.is-shown { opacity: 1; pointer-events: auto; transform: translate(-50%, 0) scale(1); }
+.teagask-jump:hover { background: var(--surface-low); }
+.teagask-jump:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+.teagask-jump svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.teagask-jump.is-live svg { animation: teagask-nudge 1.4s ease-in-out infinite; }     /* more of the answer is arriving */
+@keyframes teagask-nudge { 50% { transform: translateY(2px); } }
+
+/* blank page while a saved access key is re-checked on load (no access-card flash) */
+.teagask-boot { position: fixed; inset: 0; background: #fcf9f8; }
+.teagask-boot--dark { background: #111713; }
+
+/* ================= the character at night (dark mode) =================
+   Same shapes, flipped to light-on-dark: a mint outline and tail, a deep green band, bright lime,
+   softly glowing eyes and a faint halo. */
+#teag-ask-logo { --tg-dark: #008752; --tg-green: #49aa42; --tg-lime: #c2cd23; --tg-eye: #008752; }
+.dark-mode #teag-ask-logo { --tg-dark: #8fe5a6; --tg-green: #34b35a; --tg-lime: #e2ec52; --tg-eye: #e8fff0;
+  filter: drop-shadow(0 0 8px rgb(143 229 166 / .22)); }   /* light-on-dark: mint outline, deep green band, bright lime */
+#teag-ask-logo #body, #teag-ask-logo #tail, #teag-ask-logo #hill-dark { fill: var(--tg-dark); }
+#teag-ask-logo #body-ring { stroke: var(--tg-dark); }
+#teag-ask-logo #hill-green, #teag-ask-logo #ring-green { fill: var(--tg-green); }
+#teag-ask-logo #ring-green-flow { stroke: var(--tg-green); }
+#teag-ask-logo #hill-lime, #teag-ask-logo #ring-lime { fill: var(--tg-lime); }
+#teag-ask-logo #ring-lime-flow { stroke: var(--tg-lime); }
+#teag-ask-logo .eye { fill: var(--tg-eye); }
+.dark-mode #teag-ask-logo .eye { filter: drop-shadow(0 0 3px rgb(224 255 230 / .55)); }
+#teag-ask-logo .hill, #teag-ask-logo .ring, #teag-ask-logo .eye, #teag-ask-logo #body, #teag-ask-logo #tail { transition: fill .3s ease; }
+#teag-ask-logo .flow, #teag-ask-logo #body-ring { transition: stroke .3s ease; }
+
+/* ================= dark mode: circular reveal (animated from JS) ================= */
+::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+::view-transition-new(root) { clip-path: circle(0px at var(--tg-vt-x, 100%) var(--tg-vt-y, 0px)); }   /* hidden until the circle grows */
+html.teagask-theme-switching *, html.teagask-theme-switching *::before, html.teagask-theme-switching *::after { transition: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .teagask-chat .chat-view, .streaming-message .tw, .streaming-message .citation--pending .citation-mark, .source-tray, .source-chip,
+  .teagask-actions, .system-note, .teagask-retry, form.composer[data-teagask-glow], .teagask-check, .teagask-jump svg { animation: none !important; }
+  .teagask-jump { transition: opacity .2s ease; }
+}

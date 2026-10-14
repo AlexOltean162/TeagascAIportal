@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Teagasc Assistants</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Roboto+Slab:wght@500;600&display=swap" />
+  <script src="../theme.js?v=7"></script>
+  <link rel="stylesheet" href="../theme.css?v=7" />
+  <link rel="stylesheet" href="hub.css?v=7" />
+</head>
+<body>
+  <div class="hub">
+    <header class="mobile-bar">
+      <button type="button" class="menu-button" id="menu-button" aria-controls="rail" aria-expanded="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
+        <span class="visually-hidden">Choose an assistant</span>
+      </button>
+      <span class="mobile-title" id="mobile-title">Teagasc Assistants</span>
+    </header>
+
+    <aside class="rail" id="rail">
+      <a class="back-link" id="back-link" href="../">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15 6l-6 6 6 6"/></svg>
+        AI Portal
+      </a>
+      <p class="rail-title">Teagasc Assistants</p>
+      <nav class="rail-nav" id="rail-nav" aria-label="Assistants"></nav>
+      <div class="rail-foot">
+        <p class="rail-note">Chats aren't saved.</p>
+      </div>
+    </aside>
+
+    <main class="stage" id="stage"></main>
+  </div>
+
+  <div class="popover" id="popover" role="tooltip" hidden></div>
+
+  <script src="config.js?v=7"></script>
+  <script src="character.js?v=7"></script>
+  <script src="markdown.js?v=7"></script>
+  <script src="adapters.js?v=7"></script>
+  <script src="chat.js?v=7"></script>
+  <script src="hub.js?v=7"></script>
+</body>
+</html>

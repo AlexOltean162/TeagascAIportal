@@ -1,0 +1,83 @@
+/* Shared design tokens for the AI Portal and the Assistants hub.
+   Colours and type follow Teag-Ask so every Teagasc AI tool reads as one family.
+   Light is the default; dark is opt-in and stored under the "teagasc-ai-theme" key. */
+:root {
+  --bg: #f4f6f1;
+  --surface: #ffffff;
+  --surface-low: #ecf0e8;
+  --ink: #1b241d;
+  --ink-soft: #46524a;
+  --line: #d5dccf;
+  --primary: #005d31;
+  --primary-strong: #007841;
+  --primary-soft: #dcefe1;
+  --lime: #c2cd23;
+  --gpt: #b45309;
+  --teagask: #007841;
+  --assistants: #6b7a00;
+  --focus: #005d31;
+  --shadow: 0 1px 2px rgba(27, 36, 29, .06), 0 10px 30px rgba(27, 36, 29, .08);
+  --display: "Roboto Slab", Georgia, serif;
+  --body: Inter, "Segoe UI", system-ui, sans-serif;
+  --radius: 14px;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #111713;
+  --surface: #18211b;
+  --surface-low: #1f2a22;
+  --ink: #eef3ec;
+  --ink-soft: #b4c2b5;
+  --line: #2f3d33;
+  --primary: #8fe5a6;
+  --primary-strong: #b8f2c6;
+  --primary-soft: #1f3a28;
+  --gpt: #f5a65b;
+  --teagask: #8fe5a6;
+  --assistants: #d4de4a;
+  --focus: #b8f2c6;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 30px rgba(0, 0, 0, .35);
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; }
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-soft);
+  font: 500 .85rem var(--body);
+  cursor: pointer;
+}
+.theme-toggle:hover { color: var(--ink); border-color: var(--primary); }
+.theme-toggle svg { width: 15px; height: 15px; color: var(--primary); }
+.theme-toggle .icon-sun { display: none; }
+:root[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+:root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
