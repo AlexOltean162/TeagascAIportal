@@ -31,22 +31,28 @@ working until step 8's swap, and the swap itself takes seconds.
 
 ---
 
-## 0. Azure (once, from a machine with `az login`)
+## 0. Azure keys (once, from a machine with `az login`)
 
-Create one service principal for HCUX404. The Azure managed identities only work inside Azure.
+The servers authenticate to Azure with **keys**, not a service principal (no Entra ID access is needed). Your normal
+`az login` can read them:
 
 ```bash
-az ad sp create-for-rbac --name teagasc-ai-server --years 2     # keep appId, password, tenant
-APP=<appId>
-SEARCH=$(az search service show -g rg-teagasc-ai-assistant-eu -n teagask-ai-search-4c0116 --query id -o tsv)
-AOAI=$(az cognitiveservices account show -g rg-teagasc-ai-assistant-eu -n teagask-ai-4c0116 --query id -o tsv)
-ST=$(az storage account show -g AiPolicies -n teagascpolicies --query id -o tsv)
-az role assignment create --assignee $APP --role "Search Index Data Contributor"  --scope $SEARCH
-az role assignment create --assignee $APP --role "Search Service Contributor"     --scope $SEARCH
-az role assignment create --assignee $APP --role "Cognitive Services OpenAI User" --scope $AOAI
-az role assignment create --assignee $APP --role "Storage Blob Data Reader" --scope $ST/blobServices/default/containers/policies-mirror-sp
-az role assignment create --assignee $APP --role "Storage Blob Data Reader" --scope $ST/blobServices/default/containers/staff-handbook-mirror-sp
+az storage account keys list -g AiPolicies -n teagascpolicies --query "[0].value" -o tsv                          # STORAGE_ACCOUNT_KEY
+az search admin-key show -g rg-teagasc-ai-assistant-eu --service-name teagask-ai-search-4c0116 --query primaryKey -o tsv  # SEARCH_API_KEY
+az cognitiveservices account keys list -g rg-teagasc-ai-assistant-eu -n teagask-ai-4c0116 --query key1 -o tsv     # AZURE_OPENAI_API_KEY
 ```
+
+| Env file on HCUX404 | Keys it needs |
+|---|---|
+| `/etc/policy-assistant/policy-assistant.env` and `handbook.env` | `STORAGE_ACCOUNT_KEY`, `SEARCH_API_KEY`, `AZURE_OPENAI_API_KEY`, `OPENAI_API_KEY` |
+| `/etc/teagask/teagask.env` | `SEARCH_API_KEY`, `AZURE_OPENAI_API_KEY` |
+| `/opt/teagasc-rag/.env` (Research) | `OPENAI_API_KEY`, `OPENALEX_API_KEY` (no Azure keys) |
+
+Keep every env file mode 600. The search admin key can manage the whole search service, so treat it like a password.
+If a key leaks, regenerate it in Azure (`az storage account keys renew`, `az search admin-key renew`,
+`az cognitiveservices account keys regenerate`) and update the env files. If you later get a service principal, each
+template also has commented `AZURE_TENANT_ID` / `AZURE_CLIENT_ID` / `AZURE_CLIENT_SECRET` lines; fill those in and
+leave the keys empty.
 
 **Also have ready:**
 - An OpenAI API key (Research, Policy, Handbook).
@@ -106,8 +112,7 @@ sudo nano /etc/policy-assistant/policy-assistant.env
 sudo nano /etc/policy-assistant/handbook.env
 ```
 
-In both files, set `OPENAI_API_KEY`, `AZURE_TENANT_ID`, `AZURE_CLIENT_ID` and `AZURE_CLIENT_SECRET` (the service
-principal from step 0). Leave the `*_API_KEY` and `STORAGE_ACCOUNT_KEY` lines empty.
+In both files, set `OPENAI_API_KEY`, `STORAGE_ACCOUNT_KEY`, `SEARCH_API_KEY` and `AZURE_OPENAI_API_KEY` (step 0).
 
 ```bash
 sudo chown policy-assistant /etc/policy-assistant/*.env && sudo chmod 600 /etc/policy-assistant/*.env
@@ -127,7 +132,7 @@ sudo git clone https://github.com/AlexOltean162/TeagAskAzure.git /opt/teagask
 sudo python3.12 -m venv /opt/teagask/.venv
 sudo /opt/teagask/.venv/bin/pip install -r /opt/teagask/app/requirements.txt
 sudo mkdir -p /etc/teagask && sudo cp /opt/teagask/app/teagask.env.example /etc/teagask/teagask.env
-sudo nano /etc/teagask/teagask.env        # AZURE_CLIENT_ID and AZURE_CLIENT_SECRET (service principal from step 0)
+sudo nano /etc/teagask/teagask.env        # SEARCH_API_KEY and AZURE_OPENAI_API_KEY (step 0)
 sudo chown teagask /etc/teagask/teagask.env && sudo chmod 600 /etc/teagask/teagask.env
 sudo cp /opt/teagask/deploy/teagask.service /etc/systemd/system/
 sudo systemctl daemon-reload && sudo systemctl enable --now teagask
