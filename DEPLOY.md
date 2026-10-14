@@ -1,5 +1,8 @@
 # Deploying the new AI Portal (replacing the current one)
 
+This deploys the **AI Portal, Teag-Ask and the specialist assistants** (Policy, Staff Handbook, Research Papers).
+TeagascGPT (LibreChat and its MCP servers) is a separate, later step; see the end of this guide.
+
 Two servers, both on the company VPN, with no new DNS names or certificates:
 
 ```
@@ -13,7 +16,7 @@ Browser ──► HCUX402  nginx  (serves the AI Portal today, at /aiportal/)
               /assistant-api/policy/    ──► 127.0.0.1:8020  Policy Assistant  (systemd)
               /assistant-api/handbook/  ──► 127.0.0.1:8030  Staff Handbook    (systemd)
               /assistant-api/teagask/   ──► 127.0.0.1:8040  Teag-Ask          (systemd)
-              allowed from: HCUX402, HCUX404 itself, and its Docker networks (TeagascGPT's knowledge-mcp)
+              allowed from: HCUX402 and HCUX404 itself (and later its Docker networks, for TeagascGPT's MCP servers)
 ```
 
 | Repo (private) | Branch | Server and path |
@@ -23,12 +26,8 @@ Browser ──► HCUX402  nginx  (serves the AI Portal today, at /aiportal/)
 | `AlexOltean162/TeagAskAzure` | `main` | HCUX404 `/opt/teagask` |
 | `AlexOltean162/TeagascAIportal` | `portal-redesign` | HCUX402 `/opt/aiportal`, published to the portal's web root |
 
-Order: **HCUX404 first** (the backends and their nginx), then fix TeagascGPT's TeagAsk tool, then **swap the portal on
-HCUX402**. The current portal keeps working until step 9's swap, and the swap itself takes seconds.
-
-> **TeagascGPT needs a fix too.** Its TeagAsk knowledge tool (knowledge-mcp on HCUX404) still calls the Azure
-> container app, and that app's public address was switched off on 2026-10-13. Step 7 points it at the self-hosted
-> Teag-Ask.
+Order: **HCUX404 first** (the backends and their nginx), then **swap the portal on HCUX402**. The current portal keeps
+working until step 8's swap, and the swap itself takes seconds.
 
 ---
 
@@ -164,41 +163,9 @@ All four should answer. From any other machine they should return **403**.
 
 ---
 
-## 7. TeagascGPT: point the TeagAsk tool at the self-hosted Teag-Ask (HCUX404)
-
-In the infrastructure repo on HCUX404 (`deploy/hcux404/mcp/`), make two changes.
-
-**`.env`:**
-
-```bash
-TEAGASK_BACKEND_URL=https://ai.teagasc.net/assistant-api/teagask
-TEAGASK_APP_KEY=
-```
-
-**`docker-compose.yml`**, `knowledge-mcp` service: add `ai.teagasc.net` next to the existing `host.docker.internal`
-entry, so the container reaches HCUX404's nginx (the LibreChat container already does this):
-
-```yaml
-    extra_hosts: ["host.docker.internal:host-gateway", "ai.teagasc.net:host-gateway"]
-```
-
-Then restart and test:
-
-```bash
-docker compose up -d knowledge-mcp
-docker compose exec knowledge-mcp python -c "import httpx;print(httpx.get('https://ai.teagasc.net/assistant-api/teagask/health').status_code)"
-```
-
-Also delete the old Azure `TEAGASK_APP_KEY` value; the self-hosted Teag-Ask has no key.
-
-Leave `POLICIES_BACKEND_URL`, `RESEARCH_BACKEND_URL` and `HANDBOOK_BACKEND_URL` alone for now. The knowledge-mcp
-expects `/answer` and `/search` endpoints, and the new Policy, Handbook and Research apps don't have those yet.
-
----
-
 ## HCUX402: swap the portal
 
-### 8. Find the current portal and back it up
+### 7. Find the current portal and back it up
 
 ```bash
 sudo grep -rn "aiportal" /etc/nginx/        # shows the server block and the folder (root/alias) serving /aiportal/
@@ -208,7 +175,7 @@ sudo cp -a $WEBROOT $WEBROOT.bak-$(date +%F)
 sudo cp /etc/nginx/sites-enabled/<that file> ~/nginx-aiportal.bak-$(date +%F)
 ```
 
-### 9. Install the new portal next to the old one, then swap
+### 8. Install the new portal next to the old one, then swap
 
 ```bash
 sudo git clone -b portal-redesign https://github.com/AlexOltean162/TeagascAIportal.git /opt/aiportal
@@ -227,7 +194,7 @@ sudo nginx -t
 sudo mv $WEBROOT $WEBROOT.old && sudo mv $WEBROOT.new $WEBROOT && sudo systemctl reload nginx
 ```
 
-### 10. Check it on the VPN
+### 9. Check it on the VPN
 
 - **Portal:** open `https://teagask.teagasc.net/aiportal/`. You should see three tiles, the AI Policy and AI literacy
   training cards, and no MyData link.
@@ -238,7 +205,6 @@ sudo mv $WEBROOT $WEBROOT.old && sudo mv $WEBROOT.new $WEBROOT && sudo systemctl
   - Staff Handbook: *Can I carry over annual leave?*
   - Research: *What has Teagasc published on grassland research?* The plan should tick off its steps; it finishes in
     about 2–3 minutes.
-- **TeagascGPT:** ask something that uses the TeagAsk tool.
 - **Logs:**
   - On HCUX404: `journalctl -u policy-assistant -u handbook-assistant -u teagask -f`
   - Research: `sudo docker compose -f /opt/teagasc-rag/docker-compose.yml logs -f app`
@@ -275,3 +241,44 @@ re-enable ingress on the image's port:
 ```bash
 az containerapp ingress enable -g rg-teagasc-ai-assistant-eu -n teagasc-ai-assistant --type external --target-port <port>
 ```
+
+---
+
+## Later: connecting TeagascGPT (LibreChat and its MCP servers)
+
+Do this when you deploy the MCP servers. Until then, TeagascGPT's TeagAsk knowledge tool doesn't work: its current
+config calls the Azure container app, whose public address was switched off on 2026-10-13. The portal and
+assistants above don't depend on TeagascGPT.
+
+The `/assistant-api/` location on HCUX404 already allows HCUX404's Docker networks (`172.16.0.0/12`), so the MCP
+containers can call the same APIs. If you'd rather not allow that until then, comment out that `allow` line.
+
+### Point the TeagAsk tool at the self-hosted Teag-Ask
+
+In the infrastructure repo on HCUX404 (`deploy/hcux404/mcp/`), make two changes.
+
+**`.env`:**
+
+```bash
+TEAGASK_BACKEND_URL=https://ai.teagasc.net/assistant-api/teagask
+TEAGASK_APP_KEY=
+```
+
+**`docker-compose.yml`**, `knowledge-mcp` service: add `ai.teagasc.net` next to the existing `host.docker.internal`
+entry, so the container reaches HCUX404's nginx (the LibreChat container already does this):
+
+```yaml
+    extra_hosts: ["host.docker.internal:host-gateway", "ai.teagasc.net:host-gateway"]
+```
+
+Then restart and test:
+
+```bash
+docker compose up -d knowledge-mcp
+docker compose exec knowledge-mcp python -c "import httpx;print(httpx.get('https://ai.teagasc.net/assistant-api/teagask/health').status_code)"
+```
+
+Also delete the old Azure `TEAGASK_APP_KEY` value; the self-hosted Teag-Ask has no key.
+
+Leave `POLICIES_BACKEND_URL`, `RESEARCH_BACKEND_URL` and `HANDBOOK_BACKEND_URL` alone for now. The knowledge-mcp
+expects `/answer` and `/search` endpoints, and the new Policy, Handbook and Research apps don't have those yet.
