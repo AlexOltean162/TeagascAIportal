@@ -2,7 +2,7 @@
 //
 //   filters(base)                       -> Promise<[{ key, label, options: [{ value, label }] }]>
 //   ask(base, request, on)              -> Promise; request = { question, history, filters, assistant, signal } (assistant = its config entry)
-//        on.status(text) · on.token(text) · on.reset() · on.sources([source]) · on.data(html) · on.done(answer)
+//        on.status(text) · on.token(text) · on.reset() · on.sources([source]) · on.data(html) · on.done(answer, { interactionId })
 //   cite(text, sources)                 -> answer text with citations as [1], [2] … matching `sources`
 //   feedback(base, { rating, question, answer }) -> Promise
 //
@@ -27,10 +27,18 @@
     if (buffer.trim()) onRecord(buffer);
   }
 
-  async function post(url, body, signal) {
+  // Every request says it comes from the portal and which chat it belongs to (a random id per chat, so the
+  // analytics log can group a conversation without knowing who asked; see analytics.py in each app).
+  function portalHeaders(conversationId) {
+    var h = { "Content-Type": "application/json", "X-Assistant-Client": "ai-portal" };
+    if (conversationId) h["X-Conversation-Id"] = conversationId;
+    return h;
+  }
+
+  async function post(url, body, signal, conversationId) {
     var res = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: portalHeaders(conversationId),
       body: JSON.stringify(body),
       signal: signal
     });
@@ -38,12 +46,13 @@
     return res;
   }
 
-  // Both backends take the same thumbs up/down payload at api/feedback.
+  // Both backends take the same thumbs up/down payload at api/feedback; interaction_id names the rated answer.
   function feedback(base, payload) {
     return fetch(base + "api/feedback", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ rating: payload.rating, question: payload.question, answer_length: payload.answer.length })
+      headers: portalHeaders(payload.conversationId),
+      body: JSON.stringify({ rating: payload.rating, question: payload.question, answer_length: payload.answer.length,
+                             interaction_id: payload.interactionId || null })
     });
   }
 
@@ -169,7 +178,7 @@
         history: req.history.slice(-8),
         subfield: req.filters.subfield || null,
         programme: req.filters.programme || null
-      }, req.signal);
+      }, req.signal, req.conversationId);
       var raw = [];
       var finished = false;
       var planId = null;
@@ -183,7 +192,7 @@
           else if (ev.type === "step") markStep(planId, ev);
           else if (ev.type === "data") { var html = researchPanel(ev); if (html) on.data(html); }
           else if (ev.type === "sources") { raw = ev.sources || []; on.sources(raw.map(researchSource)); }
-          else if (ev.type === "complete") { finished = true; on.done(ev.answer); }
+          else if (ev.type === "complete") { finished = true; on.done(ev.answer, { interactionId: ev.interaction_id }); }
           else if (ev.type === "error") throw new Error(ev.message || "The assistant couldn't answer.");
         });
       } finally {
@@ -229,7 +238,7 @@
         question: req.question,
         history: req.history.slice(-6),
         dept: req.filters.dept || null
-      }, req.signal);
+      }, req.signal, req.conversationId);
       var finished = false;
       on.status(req.assistant.searching || "Searching");
       await readStream(res, "\n\n", function (chunk) {
@@ -237,7 +246,7 @@
         var ev = JSON.parse(chunk.slice(6));
         if (ev.type === "sources") { on.sources((ev.sources || []).map(policySource)); on.status(req.assistant.reading || "Reading the sources"); }
         else if (ev.type === "delta") on.token(ev.text);
-        else if (ev.type === "done") { finished = true; on.done(ev.answer); }
+        else if (ev.type === "done") { finished = true; on.done(ev.answer, { interactionId: ev.interaction_id }); }
         else if (ev.type === "error") throw new Error(ev.message || "The assistant couldn't answer.");
       });
       if (!finished) throw new Error("The answer stopped before it finished.");

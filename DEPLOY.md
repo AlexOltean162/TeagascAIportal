@@ -139,6 +139,30 @@ sudo systemctl daemon-reload && sudo systemctl enable --now teagask
 curl -s http://127.0.0.1:8040/api/access      # {"ok":true}
 ```
 
+### 4b. Usage analytics (optional, for the analytics dashboard)
+
+Each assistant can write an anonymised record of every question, answer and thumbs up/down to the
+`assistant_analytics` database on LibreChat's MongoDB. These records contain no user identity, personal details are
+redacted, and they expire after 90 days. The analytics dashboard (`librechat_data_dashboard` repo) reports on them
+alongside TeagascGPT.
+
+1. Find the host port LibreChat's MongoDB is published on: `sudo docker ps --format '{{.Names}} {{.Ports}}' | grep -i mongo`.
+   The dashboard's config suggests 27018.
+2. Set `ANALYTICS_MONGODB_URI` in each env file:
+
+   | File | Value |
+   |---|---|
+   | `policy-assistant.env`, `handbook.env`, `teagask.env` | `mongodb://127.0.0.1:27018` |
+   | `/opt/teagasc-rag/.env` (Research, inside Docker) | `mongodb://host.docker.internal:27018` |
+
+   If MongoDB requires a login, include it: `mongodb://user:pass@127.0.0.1:27018/?authSource=admin`.
+3. Restart the services (`sudo systemctl restart policy-assistant handbook-assistant teagask`;
+   `sudo docker compose up -d` for Research).
+
+Leaving `ANALYTICS_MONGODB_URI` empty turns logging off. If MongoDB is unreachable, the assistants keep answering
+and the log entries are dropped. On the dashboard, set `DASHBOARD_USER` and `DASHBOARD_PASSWORD`: it shows the chat
+logs.
+
 ### 5. Expose them to HCUX402 through HCUX404's nginx
 
 On **HCUX402**, run `hostname -I` and note its address.

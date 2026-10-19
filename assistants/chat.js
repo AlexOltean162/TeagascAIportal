@@ -23,8 +23,16 @@
     return e;
   }
 
+  // A random id per chat (new on "New chat"): lets the analytics log group a conversation's turns
+  // without identifying anyone.
+  function newConversationId() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return Array.from({ length: 4 }, function () { return Math.random().toString(16).slice(2, 10); }).join("-");
+  }
+
   function AssistantChat(a, opts) {
     this.a = a;
+    this.conversationId = newConversationId();
     this.adapter = window.AssistantAdapters[a.adapter];
     this.base = a.url;
     this.opts = opts;
@@ -135,6 +143,7 @@
   AssistantChat.prototype.reset = function () {
     this.stop();
     this.history = [];
+    this.conversationId = newConversationId();
     this.thread.innerHTML = "";
     this.el.classList.add("is-empty");
     this.input.value = "";
@@ -162,7 +171,7 @@
     this.thread.append(user, msg);
     this.scrollToEnd();
 
-    var text = "", sources = [], frame = 0, finished = false;
+    var text = "", sources = [], frame = 0, finished = false, interactionId = null;
     var draw = function () {
       frame = 0;
       msg._sources = sources;
@@ -178,6 +187,7 @@
         history: this.history,
         filters: this.filters,
         assistant: this.a,
+        conversationId: this.conversationId,
         signal: this.controller.signal
       }, {
         status: function (label) { if (label) status.querySelector(".label").textContent = label; },
@@ -185,11 +195,11 @@
         reset: function () { text = ""; answer.innerHTML = ""; },
         sources: function (list) { sources = list; },
         data: function (html) { if (panels.children.length < 3) panels.insertAdjacentHTML("beforeend", html); },
-        done: function (final) { finished = true; if (final) text = final; }
+        done: function (final, meta) { finished = true; if (final) text = final; interactionId = meta && meta.interactionId; }
       });
       cancelAnimationFrame(frame);
       draw();
-      this.finish(msg, question, adapter.cite(text, sources), sources);
+      this.finish(msg, question, adapter.cite(text, sources), sources, interactionId);
       this.history.push({ role: "user", content: question }, { role: "assistant", content: text });
     } catch (err) {
       cancelAnimationFrame(frame);
@@ -209,7 +219,7 @@
   };
 
   // Sources the answer cites, then copy and feedback.
-  AssistantChat.prototype.finish = function (msg, question, cited, sources) {
+  AssistantChat.prototype.finish = function (msg, question, cited, sources, interactionId) {
     var self = this;
     var used = [];
     var re = /\[(\d{1,3})\]/g, m;
@@ -252,7 +262,8 @@
       b.addEventListener("click", function () {
         actions.querySelectorAll(".msg-action.is-chosen").forEach(function (x) { x.classList.remove("is-chosen"); });
         b.classList.add("is-chosen");
-        self.adapter.feedback(self.base, { rating: rating, question: question, answer: cited }).catch(function () {});
+        self.adapter.feedback(self.base, { rating: rating, question: question, answer: cited, interactionId: interactionId,
+                                           conversationId: self.conversationId }).catch(function () {});
       });
       actions.appendChild(b);
     });
