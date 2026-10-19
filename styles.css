@@ -51,7 +51,6 @@
 
 .tool-logo { display: block; width: 88px; height: 88px; }
 .tool-logo-wide { width: auto; height: 72px; margin-block: 8px; }
-.bubble-gap path { stroke: var(--surface); stroke-width: 5; paint-order: stroke; }
 
 .tool h2 { margin: 20px 0 0; font: 600 1.35rem/1.2 var(--display); }
 .tool p { margin: 4px 0 0; color: var(--ink-soft); font-size: .92rem; }
@@ -67,6 +66,99 @@
   text-decoration: none;
 }
 .tool-button:hover { background: var(--primary-strong); }
+
+/* Specialist assistants tile. The logo is the assistants' character with no accessories. On hover or keyboard
+   focus it splits into the three assistants: each link's character starts on top of the logo (--dx, --dy, --s,
+   set by the script in index.html), flies to its row and puts on its accessory, then the rows fade in.
+   Touch screens can't hover, so there the list is always shown under the logo. */
+.tool-picker { position: relative; overflow: hidden; }
+.picker-logo .assistant-character,
+.picker-icon .assistant-character { display: block; width: 100%; height: auto; overflow: visible; }
+.picker-logo, .picker-icon { transform-origin: 50% 50%; }
+.picker-cover { display: flex; flex-direction: column; align-items: center; align-self: stretch; flex: 1;
+  transition: opacity .2s, transform .25s; }
+.picker-hint { margin-top: auto; }
+.picker-cover p { min-height: 2.6em; }
+
+.picker { display: grid; grid-auto-rows: 1fr; gap: 8px; }
+.picker-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+  text-decoration: none;
+  transition: border-color .2s, background .2s;
+}
+.picker-item:hover { border-color: var(--tone); background: var(--surface-low); }
+.picker-item:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.picker-icon { flex: none; width: 44px; }
+/* Each character wears only its own accessory. */
+.picker-icon .ac-acc, .picker-logo .ac-acc { display: none; }
+.picker-icon .assistant-character[data-look="tie"] .ac-acc[data-look="tie"],
+.picker-icon .assistant-character[data-look="badge"] .ac-acc[data-look="badge"],
+.picker-icon .assistant-character[data-look="goggles"] .ac-acc[data-look="goggles"] { display: inline; }
+.picker-icon .ac-acc { transform-box: fill-box; transform-origin: 50% 50%; transition: opacity .25s, transform .3s; }
+.picker-item:hover .assistant-character { animation: picker-hop .45s ease-out; }
+@keyframes picker-hop { 40% { transform: translateY(-3px); } }
+.picker-text { display: flex; flex-direction: column; min-width: 0; transition: opacity .25s; }
+.picker-text strong { font: 600 .98rem/1.25 var(--display); }
+.picker-text small { overflow: hidden; color: var(--ink-soft); font-size: .8rem; white-space: nowrap; text-overflow: ellipsis; }
+.picker-item::after { content: "\203A"; margin-left: auto; color: var(--ink-soft); font-size: 1.3rem; transition: transform .15s, opacity .25s; }
+.picker-item:hover::after { transform: translateX(3px); color: var(--ink); }
+
+@media (hover: hover) {
+  .picker { position: absolute; inset: 20px 16px 16px; pointer-events: none; }
+
+  /* Resting: the three characters sit invisibly on the logo, without accessories; the rows are empty. */
+  .picker-logo { transition: opacity .2s .35s, transform .3s .35s; }
+  .picker-icon { opacity: 0; transform: translate(var(--dx, 0), var(--dy, 0)) scale(var(--s, 1));
+    transition: transform .45s cubic-bezier(.4, 0, .2, 1), opacity .15s .4s; }
+  .picker-icon .ac-acc { opacity: 0; transform: scale(.4); }
+  .picker-item { border-color: transparent; background: transparent; }
+  .picker-text, .picker-item::after { opacity: 0; }
+
+  /* Open: the logo hands over to the three characters, which fly out to their rows one after another. */
+  .tool-picker:hover .picker-logo, .tool-picker:focus-within .picker-logo { opacity: 0; transform: scale(.85); transition-delay: .05s; }
+  .tool-picker:hover .picker-cover, .tool-picker:focus-within .picker-cover { opacity: 0; transform: translateY(10px); }
+  .tool-picker:hover .picker, .tool-picker:focus-within .picker { pointer-events: auto; }
+  .tool-picker:hover .picker-icon, .tool-picker:focus-within .picker-icon {
+    opacity: 1; transform: none;
+    transition: transform .6s cubic-bezier(.3, 1.25, .5, 1), opacity .1s; }
+  .tool-picker:hover .ac-acc, .tool-picker:focus-within .ac-acc { opacity: 1; transform: none; }
+  .tool-picker:hover .picker-item, .tool-picker:focus-within .picker-item { border-color: var(--line); background: var(--surface); }
+  .tool-picker:hover .picker-item:hover, .tool-picker:focus-within .picker-item:hover { border-color: var(--tone); background: var(--surface-low); }
+  .tool-picker:hover .picker-text, .tool-picker:focus-within .picker-text,
+  .tool-picker:hover .picker-item::after, .tool-picker:focus-within .picker-item::after { opacity: 1; }
+
+  .tool-picker:hover .picker-item:nth-child(2) .picker-icon, .tool-picker:focus-within .picker-item:nth-child(2) .picker-icon { transition-delay: .07s, .07s; }
+  .tool-picker:hover .picker-item:nth-child(3) .picker-icon, .tool-picker:focus-within .picker-item:nth-child(3) .picker-icon { transition-delay: .14s, .14s; }
+  .tool-picker:hover .picker-item:nth-child(1) .ac-acc, .tool-picker:focus-within .picker-item:nth-child(1) .ac-acc { transition-delay: .45s; }
+  .tool-picker:hover .picker-item:nth-child(2) .ac-acc, .tool-picker:focus-within .picker-item:nth-child(2) .ac-acc { transition-delay: .52s; }
+  .tool-picker:hover .picker-item:nth-child(3) .ac-acc, .tool-picker:focus-within .picker-item:nth-child(3) .ac-acc { transition-delay: .59s; }
+  .tool-picker:hover .picker-item, .tool-picker:focus-within .picker-item,
+  .tool-picker:hover .picker-text, .tool-picker:focus-within .picker-text,
+  .tool-picker:hover .picker-item::after, .tool-picker:focus-within .picker-item::after { transition-delay: .35s; }
+  .tool-picker:hover .picker-item:hover, .tool-picker:focus-within .picker-item:hover { transition-delay: 0s; }
+
+}
+
+@media (hover: none) {
+  .picker-hint { display: none; }
+  .picker-cover p { min-height: 0; }
+  .picker { align-self: stretch; margin-top: 20px; }
+  .picker-item { min-height: 60px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .picker-logo, .picker-icon, .picker-cover, .picker-icon .ac-acc { transform: none !important; }
+  .picker-item:hover .assistant-character { animation: none; }
+}
 
 /* AI policy and training */
 .governance {

@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Roboto+Slab:wght@500;600&display=swap" />
   <script src="theme.js?v=2"></script>
   <link rel="stylesheet" href="theme.css?v=2" />
-  <link rel="stylesheet" href="styles.css?v=2" />
+  <link rel="stylesheet" href="styles.css?v=7" />
 </head>
 <body>
   <header class="topbar">
@@ -47,21 +47,30 @@
         <a class="tool-button" href="teagask/">Open</a>
       </article>
 
-      <article class="tool">
-        <!-- Assistants: three Teag-Ask-style bubbles in the brand greens, the front one "typing" -->
-        <svg class="tool-logo" viewBox="0 0 120 120" role="img" aria-label="Assistants">
-          <g class="bubble-gap">
-            <path fill="#c2cd23" d="M70 10h24a18 18 0 0 1 18 18v10a18 18 0 0 1-18 18H56a4 4 0 0 1-4-4V28a18 18 0 0 1 18-18z"/>
-            <path fill="#49aa42" d="M50 32h24a18 18 0 0 1 18 18v10a18 18 0 0 1-18 18H36a4 4 0 0 1-4-4V50a18 18 0 0 1 18-18z"/>
-            <path fill="#008752" d="M30 56h24a18 18 0 0 1 18 18v10a18 18 0 0 1-18 18H16a4 4 0 0 1-4-4V74a18 18 0 0 1 18-18z"/>
-          </g>
-          <circle cx="29" cy="79" r="4.5" fill="#fff"/>
-          <circle cx="42" cy="79" r="4.5" fill="#fff"/>
-          <circle cx="55" cy="79" r="4.5" fill="#fff"/>
-        </svg>
-        <h2>Assistants</h2>
-        <p>Specialist assistants</p>
-        <a class="tool-button" href="assistants/">Open</a>
+      <!-- Specialist assistants: the generic logo opens into the three assistants on hover or keyboard focus
+           (always open on touch screens). Each link goes straight to that assistant in the hub. -->
+      <article class="tool tool-picker">
+        <!-- The assistants' character with no accessories; on hover it splits into the three assistants -->
+        <span class="tool-logo picker-logo" role="img" aria-label="Specialist assistants"></span>
+        <div class="picker-cover" aria-hidden="true">
+          <h2>Specialist assistants</h2>
+          <p>Policies, Staff Handbook and Research Papers</p>
+          <span class="tool-button picker-hint">Choose an assistant</span>
+        </div>
+        <nav class="picker" aria-label="Specialist assistants">
+          <a class="picker-item" href="assistants/#policy" style="--tone:#008752">
+            <span class="picker-icon" data-look="tie"></span>
+            <span class="picker-text"><strong>Policy Assistant</strong><small>Policies and procedures</small></span>
+          </a>
+          <a class="picker-item" href="assistants/#handbook" style="--tone:#49aa42">
+            <span class="picker-icon" data-look="badge"></span>
+            <span class="picker-text"><strong>Staff Handbook</strong><small>Leave, pay and HR terms</small></span>
+          </a>
+          <a class="picker-item" href="assistants/#research" style="--tone:#c2cd23">
+            <span class="picker-icon" data-look="goggles"></span>
+            <span class="picker-text"><strong>Research Papers</strong><small>Papers, authors and topics</small></span>
+          </a>
+        </nav>
       </article>
     </section>
 
@@ -88,5 +97,45 @@
       </a>
     </section>
   </main>
+  <script src="assistants/character.js?v=8"></script>
+  <script>
+    // The assistants' characters (same artwork as the hub): a plain one as the tile logo, and one per picker
+    // link. Each link's character starts on top of the logo (--dx, --dy, --s) so that on hover the logo
+    // appears to split into the three assistants (styles.css).
+    (function () {
+      var logo = document.querySelector(".picker-logo");
+      logo.appendChild(AssistantCharacter.create("plain"));
+      var icons = document.querySelectorAll(".picker-icon[data-look]");
+      icons.forEach(function (slot) { slot.appendChild(AssistantCharacter.create(slot.dataset.look)); });
+
+      var tile = logo.closest(".tool-picker");
+
+      // Centre of an element within the tile from offsetLeft/Top, which ignore CSS transforms, so the result
+      // is the same whether the tile is at rest, open or mid-animation.
+      function centre(el) {
+        var x = el.offsetWidth / 2, y = el.offsetHeight / 2;
+        for (var n = el; n && n !== tile; n = n.offsetParent) { x += n.offsetLeft; y += n.offsetTop; }
+        return { x: x, y: y };
+      }
+
+      function place() {
+        var l = centre(logo);
+        icons.forEach(function (slot) {
+          var c = centre(slot);
+          slot.style.setProperty("--dx", (l.x - c.x).toFixed(1) + "px");
+          slot.style.setProperty("--dy", (l.y - c.y).toFixed(1) + "px");
+          slot.style.setProperty("--s", (logo.offsetWidth / slot.offsetWidth).toFixed(3));
+        });
+      }
+      // Re-measure whenever the tile changes size (images and fonts loading, window resizes) and just
+      // before it opens.
+      place();
+      if (window.ResizeObserver) new ResizeObserver(place).observe(tile);
+      window.addEventListener("resize", place);
+      if (document.fonts) document.fonts.ready.then(place);
+      tile.addEventListener("pointerenter", place);
+      tile.addEventListener("focusin", place);
+    })();
+  </script>
 </body>
 </html>
